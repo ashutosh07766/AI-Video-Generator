@@ -24,16 +24,18 @@ export type Character = {
   id: string;
   name: string;
   gender: Gender;
+  /** Sarvam bulbul:v2 speaker id — each character gets a distinct real voice. */
+  voice: string;
   skin: string;
   hair: string;
   shirt: string;
 };
 
 export const CHARACTERS: Character[] = [
-  { id: "asha", name: "Asha", gender: "female", skin: "#f1c79b", hair: "#2b2b2b", shirt: "#e23744" },
-  { id: "raj", name: "Raj", gender: "male", skin: "#e0a877", hair: "#1a1a1a", shirt: "#1d6fb8" },
-  { id: "meera", name: "Meera", gender: "female", skin: "#f3d2ad", hair: "#3a2218", shirt: "#0b8457" },
-  { id: "vikram", name: "Vikram", gender: "male", skin: "#d59a6a", hair: "#0f0f0f", shirt: "#7209b7" },
+  { id: "asha", name: "Asha", gender: "female", voice: "anushka", skin: "#f1c79b", hair: "#2b2b2b", shirt: "#e23744" },
+  { id: "raj", name: "Raj", gender: "male", voice: "abhilash", skin: "#e0a877", hair: "#1a1a1a", shirt: "#1d6fb8" },
+  { id: "meera", name: "Meera", gender: "female", voice: "vidya", skin: "#f3d2ad", hair: "#3a2218", shirt: "#0b8457" },
+  { id: "vikram", name: "Vikram", gender: "male", voice: "karun", skin: "#d59a6a", hair: "#0f0f0f", shirt: "#7209b7" },
 ];
 
 export function getCharacter(id: string): Character {

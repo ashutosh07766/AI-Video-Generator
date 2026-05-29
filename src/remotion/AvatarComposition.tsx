@@ -108,18 +108,14 @@ export const AvatarComposition: React.FC<AvatarCompositionProps> = (props) => {
         return m ? <Audio src={m} volume={0.14} loop /> : null;
       })()}
 
-      {/* Per-line voiceover. playbackRate nudges male/female voices apart
-          when the free TTS can't pick distinct voices (plan polish). */}
-      {props.lines.map((l, i) => {
-        if (!l.audioDataUrl) return null;
-        const char = getCharacter(props.characters[l.speaker]);
-        const rate = char.gender === "male" ? 0.93 : 1.06;
-        return (
+      {/* Per-line voiceover — each character has a distinct real voice (Sarvam). */}
+      {props.lines.map((l, i) =>
+        l.audioDataUrl ? (
           <Sequence key={i} from={Math.round(l.fromSec * fps)}>
-            <Audio src={l.audioDataUrl} playbackRate={rate} />
+            <Audio src={l.audioDataUrl} />
           </Sequence>
-        );
-      })}
+        ) : null,
+      )}
 
       {/* spotlight glow behind the speaker */}
       <AbsoluteFill

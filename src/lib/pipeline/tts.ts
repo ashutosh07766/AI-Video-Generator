@@ -2,6 +2,10 @@ import "server-only";
 import { LangCode } from "../i18n/messages";
 
 export type VoiceGender = "female" | "male";
+export type VoiceOpts = { gender?: VoiceGender; voice?: string };
+
+// Default Sarvam bulbul:v2 speakers when a specific voice isn't given.
+const DEFAULT_SARVAM = { female: "anushka", male: "abhilash" } as const;
 
 // ── Text-to-Speech provider interface ────────────────────────────────
 // Sarvam (best, keyed) → Google Cloud TTS (keyed) → Google Translate TTS
@@ -29,17 +33,18 @@ const SARVAM_LOCALE: Record<LangCode, string> = {
 async function viaSarvam(
   text: string,
   lang: LangCode,
-  gender: VoiceGender,
+  opts: VoiceOpts,
 ): Promise<TtsResult> {
   const key = process.env.SARVAM_API_KEY;
   if (!key) return null;
+  const speaker = opts.voice || DEFAULT_SARVAM[opts.gender ?? "female"];
   const res = await fetch("https://api.sarvam.ai/text-to-speech", {
     method: "POST",
     headers: { "Content-Type": "application/json", "api-subscription-key": key },
     body: JSON.stringify({
       inputs: [text.slice(0, 1500)],
       target_language_code: SARVAM_LOCALE[lang],
-      speaker: gender === "male" ? "arvind" : "meera",
+      speaker,
       model: "bulbul:v2",
     }),
   });
@@ -53,7 +58,7 @@ async function viaSarvam(
 async function viaGoogle(
   text: string,
   lang: LangCode,
-  gender: VoiceGender,
+  opts: VoiceOpts,
 ): Promise<TtsResult> {
   const key = process.env.GOOGLE_TTS_API_KEY;
   if (!key) return null;
@@ -66,7 +71,7 @@ async function viaGoogle(
         input: { text: text.slice(0, 1500) },
         voice: {
           languageCode: SARVAM_LOCALE[lang],
-          ssmlGender: gender === "male" ? "MALE" : "FEMALE",
+          ssmlGender: opts.gender === "male" ? "MALE" : "FEMALE",
         },
         audioConfig: { audioEncoding: "MP3" },
       }),
@@ -112,7 +117,7 @@ function chunkText(text: string, max = 180): string[] {
 async function viaGoogleTranslate(
   text: string,
   lang: LangCode,
-  _gender: VoiceGender,
+  _opts: VoiceOpts,
 ): Promise<TtsResult> {
   const tl = TRANSLATE_TL[lang] ?? "en";
   const chunks = chunkText(text).slice(0, 8); // safety cap
@@ -146,11 +151,11 @@ async function viaGoogleTranslate(
 export async function synthesizeVoice(
   text: string,
   lang: LangCode,
-  gender: VoiceGender = "female",
+  opts: VoiceOpts = {},
 ): Promise<TtsResult> {
   for (const fn of [viaSarvam, viaGoogle, viaGoogleTranslate]) {
     try {
-      const out = await fn(text, lang, gender);
+      const out = await fn(text, lang, opts);
       if (out) return out;
     } catch (err) {
       console.warn("[tts] provider failed:", (err as Error).message);

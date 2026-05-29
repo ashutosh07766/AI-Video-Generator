@@ -47,8 +47,8 @@ export async function POST(req: Request) {
   //    Google → free Google Translate).
   const audios = await Promise.all(
     dialogue.lines.map(async (l) => {
-      const gender = getCharacter(input.characters[l.speaker]).gender;
-      const v = await synthesizeVoice(l.text, lang, gender);
+      const ch = getCharacter(input.characters[l.speaker]);
+      const v = await synthesizeVoice(l.text, lang, { gender: ch.gender, voice: ch.voice });
       return v ? `data:${v.mime};base64,${v.audioBase64}` : null;
     }),
   );
