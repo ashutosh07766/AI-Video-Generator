@@ -58,22 +58,22 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-cream">
+    <main className="min-h-screen bg-base">
       <Header />
       <div className="container-px grid place-items-center py-16">
         <div className="card w-full max-w-sm p-8">
-          <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-brand-600">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white/10 text-brand-600">
             <Phone className="h-7 w-7" />
           </div>
           <h1 className="mt-5 text-center font-display text-2xl font-extrabold">{t("login.title")}</h1>
-          <p className="mt-1 text-center text-sm text-ink-soft">{t("login.subtitle")}</p>
+          <p className="mt-1 text-center text-sm text-white/70">{t("login.subtitle")}</p>
 
           <div className="mt-6 space-y-3">
             {stage === "phone" ? (
               <>
-                <label className="block text-sm font-semibold text-ink-soft">{t("login.phone")}</label>
-                <div className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 ring-1 ring-black/10 focus-within:ring-2 focus-within:ring-brand-500">
-                  <span className="text-ink-muted">🇮🇳 +91</span>
+                <label className="block text-sm font-semibold text-white/70">{t("login.phone")}</label>
+                <div className="flex items-center gap-2 rounded-2xl bg-white/5 px-4 py-3 ring-1 ring-white/15 focus-within:ring-2 focus-within:ring-brand-500">
+                  <span className="text-white/45">🇮🇳 +91</span>
                   <input
                     className="w-full bg-transparent outline-none"
                     inputMode="numeric"
@@ -89,9 +89,9 @@ export default function LoginPage() {
               </>
             ) : (
               <>
-                <label className="block text-sm font-semibold text-ink-soft">{t("login.otp")}</label>
+                <label className="block text-sm font-semibold text-white/70">{t("login.otp")}</label>
                 <input
-                  className="w-full rounded-2xl bg-white px-4 py-3 text-center text-2xl font-bold tracking-[0.4em] outline-none ring-1 ring-black/10 focus:ring-2 focus:ring-brand-500"
+                  className="w-full rounded-2xl bg-white/5 px-4 py-3 text-center text-2xl font-bold tracking-[0.4em] outline-none ring-1 ring-white/15 focus:ring-2 focus:ring-brand-500"
                   inputMode="numeric"
                   maxLength={6}
                   placeholder="••••••"
@@ -103,7 +103,7 @@ export default function LoginPage() {
                   {t("login.verify")} <ArrowRight className="h-5 w-5" />
                 </button>
                 {devCode && (
-                  <p className="rounded-xl bg-gold-400/20 p-2 text-center text-sm font-semibold text-ink-soft">
+                  <p className="rounded-xl bg-gold-400/20 p-2 text-center text-sm font-semibold text-white/70">
                     {t("login.devCode").replace("{code}", devCode)}
                   </p>
                 )}

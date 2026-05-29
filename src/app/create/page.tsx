@@ -164,7 +164,7 @@ function CreateFlow() {
   }
 
   return (
-    <main className="min-h-screen bg-cream">
+    <main className="min-h-screen bg-base">
       <TopBar step={step} />
       <div className="container-px py-8">
         <AnimatePresence mode="wait">
@@ -187,7 +187,7 @@ function CreateFlow() {
                       }}
                       className={cn(
                         "group relative rounded-3xl p-1.5 ring-2 transition-all",
-                        templateId === tpl.id ? "ring-brand-500" : "ring-transparent hover:ring-black/10",
+                        templateId === tpl.id ? "ring-brand-500" : "ring-transparent hover:ring-white/15",
                       )}
                     >
                       <div className="mx-auto w-full max-w-[180px]">
@@ -238,7 +238,7 @@ function CreateFlow() {
                     placeholder={mode === "avatar" ? t("create.field.offer.avatar.ph") : t("create.field.offer.ph")}
                   />
                   {mode === "avatar" && (
-                    <p className="mt-2 text-xs text-ink-muted">{t("create.field.offer.avatar.hint")}</p>
+                    <p className="mt-2 text-xs text-white/45">{t("create.field.offer.avatar.hint")}</p>
                   )}
                 </Field>
 
@@ -286,7 +286,7 @@ function CreateFlow() {
                             "rounded-full px-4 py-2 text-sm font-semibold ring-1 transition",
                             active
                               ? "bg-brand-500 text-white ring-brand-500"
-                              : "bg-white text-ink-soft ring-black/10 hover:bg-black/5",
+                              : "bg-white/5 text-white/70 ring-white/15 hover:bg-white/10",
                           )}
                         >
                           {t(`music.${m}`)}
@@ -334,15 +334,17 @@ function CreateFlow() {
         .ipt {
           width: 100%;
           border-radius: 1rem;
-          background: white;
+          background: rgba(255, 255, 255, 0.05);
+          color: #fff;
           padding: 0.9rem 1.1rem;
           font-size: 1rem;
           outline: none;
-          box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
           transition: box-shadow 0.15s;
         }
+        .ipt::placeholder { color: rgba(255, 255, 255, 0.4); }
         .ipt:focus {
-          box-shadow: 0 0 0 2px #f4452a;
+          box-shadow: inset 0 0 0 1.5px #f4452a, 0 0 0 4px rgba(244, 69, 42, 0.15);
         }
       `}</style>
     </main>
@@ -352,7 +354,7 @@ function CreateFlow() {
 function TopBar({ step }: { step: number }) {
   const { t } = useI18n();
   return (
-    <header className="sticky top-0 z-40 border-b border-black/5 bg-cream/80 backdrop-blur-lg">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-base/80 backdrop-blur-lg">
       <div className="container-px flex h-16 items-center justify-between">
         <Logo />
         <span className="pill">
@@ -360,7 +362,7 @@ function TopBar({ step }: { step: number }) {
         </span>
         <LanguageToggle compact />
       </div>
-      <div className="h-1 w-full bg-black/5">
+      <div className="h-1 w-full bg-white/10">
         <motion.div
           className="h-full bg-brand-500"
           initial={false}
@@ -390,7 +392,7 @@ function StepShell({
     >
       <div className="mb-7 text-center">
         <h1 className="font-display text-2xl font-extrabold sm:text-3xl">{title}</h1>
-        <p className="mt-1 text-ink-soft">{subtitle}</p>
+        <p className="mt-1 text-white/70">{subtitle}</p>
       </div>
       {children}
     </motion.div>
@@ -410,10 +412,10 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink-soft">
+      <span className="mb-2 flex items-center gap-2 text-sm font-semibold text-white/70">
         {label}
         {required && <span className="text-brand-500">• {required}</span>}
-        {optional && <span className="text-ink-muted">• {optional}</span>}
+        {optional && <span className="text-white/45">• {optional}</span>}
       </span>
       {children}
     </label>
@@ -438,7 +440,7 @@ function LangPills({
             "rounded-full px-4 py-2 text-sm font-semibold ring-1 transition",
             value === l.code
               ? "bg-brand-500 text-white ring-brand-500"
-              : "bg-white text-ink-soft ring-black/10 hover:bg-black/5",
+              : "bg-white/5 text-white/70 ring-white/15 hover:bg-white/10",
           )}
         >
           {l.native}
@@ -482,7 +484,7 @@ function PhotoUploader({
     <Field label={label} optional={optional}>
       <div className="flex flex-wrap gap-3">
         {photos.map((src, i) => (
-          <div key={i} className="relative h-24 w-20 overflow-hidden rounded-xl ring-1 ring-black/10">
+          <div key={i} className="relative h-24 w-20 overflow-hidden rounded-xl ring-1 ring-white/15">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={src} alt="" className="h-full w-full object-cover" />
             <button
@@ -496,13 +498,13 @@ function PhotoUploader({
         {photos.length < 4 && (
           <button
             onClick={() => inputRef.current?.click()}
-            className="grid h-24 w-20 place-items-center rounded-xl border-2 border-dashed border-black/15 text-ink-muted hover:border-brand-400 hover:text-brand-500"
+            className="grid h-24 w-20 place-items-center rounded-xl border-2 border-dashed border-black/15 text-white/45 hover:border-brand-400 hover:text-brand-500"
           >
             {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <ImagePlus className="h-6 w-6" />}
           </button>
         )}
       </div>
-      <p className="mt-2 text-xs text-ink-muted">{hint}</p>
+      <p className="mt-2 text-xs text-white/45">{hint}</p>
       <input
         ref={inputRef}
         type="file"
@@ -531,7 +533,7 @@ function LogoUploader({
     <Field label={label} optional={optional}>
       <div className="flex items-center gap-3">
         {logo ? (
-          <div className="relative h-16 w-16 overflow-hidden rounded-xl ring-1 ring-black/10">
+          <div className="relative h-16 w-16 overflow-hidden rounded-xl ring-1 ring-white/15">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={logo} alt="" className="h-full w-full object-cover" />
             <button
@@ -544,7 +546,7 @@ function LogoUploader({
         ) : null}
         <button
           onClick={() => inputRef.current?.click()}
-          className="grid h-16 w-16 place-items-center rounded-xl border-2 border-dashed border-black/15 text-ink-muted hover:border-brand-400 hover:text-brand-500"
+          className="grid h-16 w-16 place-items-center rounded-xl border-2 border-dashed border-black/15 text-white/45 hover:border-brand-400 hover:text-brand-500"
         >
           <ImagePlus className="h-5 w-5" />
         </button>
@@ -611,7 +613,7 @@ function GeneratingOverlay({ stage }: { stage: number }) {
       className="fixed inset-0 z-50 grid place-items-center bg-ink/70 backdrop-blur-sm"
     >
       <div className="card w-[88%] max-w-sm p-8 text-center">
-        <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-brand-50">
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-white/10">
           <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
         </div>
         <h3 className="mt-5 font-display text-xl font-bold">{t("create.generating")}</h3>
@@ -625,7 +627,7 @@ function GeneratingOverlay({ stage }: { stage: number }) {
               ) : (
                 <span className="h-5 w-5 rounded-full border-2 border-black/10" />
               )}
-              <span className={i <= stage ? "text-ink" : "text-ink-muted"}>{s}</span>
+              <span className={i <= stage ? "text-white" : "text-white/45"}>{s}</span>
             </div>
           ))}
         </div>
@@ -714,7 +716,7 @@ function ResultView({
             <ReelPlayer plan={result.plan} voiceSrc={result.voiceDataUrl} browserVoice controls />
           )}
         </div>
-        <p className="mt-2 text-center text-xs text-ink-muted">▶︎ {t("create.s3.subtitle")}</p>
+        <p className="mt-2 text-center text-xs text-white/45">▶︎ {t("create.s3.subtitle")}</p>
       </div>
       <div className="space-y-3">
         <button onClick={download} disabled={downloading} className="btn-primary w-full text-lg">
@@ -727,11 +729,11 @@ function ResultView({
         <button onClick={onRegenerate} className="btn-ghost w-full">
           <RefreshCw className="h-5 w-5" /> {t("btn.regenerate")}
         </button>
-        <Link href="/create" className="btn-dark w-full" onClick={() => location.reload()}>
+        <Link href="/create" className="btn-ghost w-full" onClick={() => location.reload()}>
           {t("btn.newReel")}
         </Link>
         {note && (
-          <p className="rounded-2xl bg-gold-400/20 p-3 text-center text-sm text-ink-soft">{note}</p>
+          <p className="rounded-2xl bg-gold-400/20 p-3 text-center text-sm text-white/70">{note}</p>
         )}
       </div>
     </div>
@@ -741,14 +743,14 @@ function ResultView({
 function ModeTabs({ mode, setMode }: { mode: Mode; setMode: (m: Mode) => void }) {
   const { t } = useI18n();
   return (
-    <div className="mx-auto mb-7 flex max-w-md gap-2 rounded-2xl bg-white p-1.5 shadow-card ring-1 ring-black/5">
+    <div className="mx-auto mb-7 flex max-w-md gap-2 rounded-2xl bg-white/5 p-1.5 shadow-card ring-1 ring-white/10">
       {(["reel", "avatar"] as Mode[]).map((m) => (
         <button
           key={m}
           onClick={() => setMode(m)}
           className={cn(
             "flex-1 rounded-xl px-4 py-2.5 text-sm font-bold transition",
-            mode === m ? "bg-brand-500 text-white shadow-soft" : "text-ink-soft hover:bg-black/5",
+            mode === m ? "bg-brand-500 text-white shadow-soft" : "text-white/70 hover:bg-white/10",
           )}
         >
           {t(`create.mode.${m}`)}
@@ -784,18 +786,18 @@ function AvatarPicker({
             onClick={() => setFormat(f.id)}
             className={cn(
               "rounded-2xl p-4 text-center ring-2 transition",
-              format === f.id ? "bg-brand-50 ring-brand-500" : "bg-white ring-black/5 hover:ring-black/15",
+              format === f.id ? "bg-white/10 ring-brand-500" : "bg-white/5 ring-white/10 hover:ring-black/15",
             )}
           >
             <div className="text-3xl">{f.emoji}</div>
             <div className="mt-2 text-sm font-bold">{t(`avatar.format.${f.id}`)}</div>
-            <div className="mt-0.5 text-xs text-ink-muted">{t(`avatar.format.${f.id}.d`)}</div>
+            <div className="mt-0.5 text-xs text-white/45">{t(`avatar.format.${f.id}.d`)}</div>
           </button>
         ))}
       </div>
 
       <div>
-        <p className="mb-3 text-center text-sm font-semibold text-ink-soft">{t("avatar.pickChars")}</p>
+        <p className="mb-3 text-center text-sm font-semibold text-white/70">{t("avatar.pickChars")}</p>
         <div className="flex justify-center gap-8">
           <CharacterChooser label={t("avatar.speaker1")} value={charA} onChange={setCharA} />
           {twoSpeaker && (
@@ -804,7 +806,7 @@ function AvatarPicker({
         </div>
       </div>
 
-      <p className="text-center text-xs text-ink-muted">🔒 {t("avatar.premium")}</p>
+      <p className="text-center text-xs text-white/45">🔒 {t("avatar.premium")}</p>
     </div>
   );
 }
@@ -823,7 +825,7 @@ function CharacterChooser({
       <div className="mb-2 grid h-28 w-28 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-ink/90 to-ink-soft">
         <AvatarCharacter char={getCharacter(value)} speaking frame={0} size={96} />
       </div>
-      <div className="mb-2 text-xs font-semibold text-ink-muted">{label}</div>
+      <div className="mb-2 text-xs font-semibold text-white/45">{label}</div>
       <div className="flex justify-center gap-1.5">
         {CHARACTERS.map((c) => (
           <button

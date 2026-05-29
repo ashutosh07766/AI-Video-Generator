@@ -31,7 +31,7 @@ export function LanguageToggle({ compact = false }: { compact?: boolean }) {
         {!compact && <ChevronDown className="h-4 w-4 opacity-60" />}
       </button>
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-2xl bg-white p-1.5 shadow-card ring-1 ring-black/5">
+        <div className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-white/10 bg-surface2/95 p-1.5 shadow-card backdrop-blur-2xl">
           {languages.map((l) => (
             <button
               key={l.code}
@@ -41,7 +41,7 @@ export function LanguageToggle({ compact = false }: { compact?: boolean }) {
               }}
               className={cn(
                 "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
-                l.code === lang ? "bg-brand-50 text-brand-700" : "hover:bg-black/5",
+                l.code === lang ? "bg-brand-500/15 text-brand-300" : "text-white/80 hover:bg-white/10",
               )}
             >
               <span className="font-medium">{l.native}</span>

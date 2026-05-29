@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Poppins, Inter } from "next/font/google";
+import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/lib/i18n/provider";
 
-const display = Poppins({
+const display = Space_Grotesk({
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
+  weight: ["500", "600", "700"],
   variable: "--font-display",
   display: "swap",
 });
@@ -22,24 +22,20 @@ export const metadata: Metadata = {
     "Upload photos and your offer. ReelKaro makes a professional marketing reel with voiceover, subtitles and music in your language — in under 2 minutes.",
   manifest: "/manifest.webmanifest",
   applicationName: "ReelKaro",
-  appleWebApp: { capable: true, title: "ReelKaro", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "ReelKaro", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f4452a",
+  themeColor: "#080510",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="hi" className={`${display.variable} ${sans.variable}`}>
-      <body className="font-sans">
+      <body className="font-sans grain">
         <I18nProvider>{children}</I18nProvider>
       </body>
     </html>

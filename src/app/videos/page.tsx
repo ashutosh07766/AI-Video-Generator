@@ -59,7 +59,7 @@ export default function VideosPage() {
   }
 
   return (
-    <main className="min-h-screen bg-cream">
+    <main className="min-h-screen bg-base">
       <Header />
       <div className="container-px py-10">
         <div className="mb-8 flex items-center justify-between">
@@ -71,7 +71,7 @@ export default function VideosPage() {
 
         {reels.length === 0 ? (
           <div className="card mx-auto max-w-md p-10 text-center">
-            <p className="text-ink-soft">{t("videos.empty")}</p>
+            <p className="text-white/70">{t("videos.empty")}</p>
             <Link href="/create" className="btn-primary mt-5 inline-flex">
               {t("videos.make")}
             </Link>
@@ -94,7 +94,7 @@ export default function VideosPage() {
                 </button>
                 <div className="mt-2 flex items-center justify-between gap-2">
                   <span className="truncate text-sm font-semibold">{r.title}</span>
-                  <button onClick={() => remove(r.id)} className="text-ink-muted hover:text-brand-500">
+                  <button onClick={() => remove(r.id)} className="text-white/45 hover:text-brand-500">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
