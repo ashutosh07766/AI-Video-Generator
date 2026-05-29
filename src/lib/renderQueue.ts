@@ -8,8 +8,7 @@ import IORedis from "ioredis";
 // /api/render route renders synchronously instead.
 export const isQueueConfigured =
   !!process.env.REDIS_URL &&
-  !!process.env.R2_ACCOUNT_ID &&
-  !!process.env.R2_ACCESS_KEY_ID;
+  (!!process.env.S3_ENDPOINT || !!process.env.R2_ACCOUNT_ID);
 
 let queue: Queue | null = null;
 

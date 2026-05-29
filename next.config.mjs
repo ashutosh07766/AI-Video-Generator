@@ -16,6 +16,11 @@ const nextConfig = {
     "ioredis",
     "postgres",
   ],
+  // On Vercel the render route only ENQUEUES (the worker renders), so keep the
+  // heavy Remotion render deps out of the serverless function bundle.
+  outputFileTracingExcludes: {
+    "/api/render": ["**/node_modules/@remotion/**", "**/node_modules/esbuild/**"],
+  },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },

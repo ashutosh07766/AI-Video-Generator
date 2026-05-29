@@ -43,6 +43,15 @@ type GenResult =
 
 const BRAND_COLORS = ["#f4452a", "#e02f17", "#0b6e4f", "#3a0ca3", "#1d3557", "#d6336c"];
 
+// Save a reel to the server (per-account). No-op (401) if not logged in.
+function saveToServer(kind: "reel" | "avatar", title: string, lang: string, meta: unknown) {
+  fetch("/api/videos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ kind, title, lang, meta }),
+  }).catch(() => {});
+}
+
 // Poll the worker queue until the MP4 is rendered; returns its URL.
 async function pollRender(
   jobId: string,
@@ -140,10 +149,12 @@ function CreateFlow() {
         const out = await generateAvatar({ ...input, format, characters: [charA, charB] });
         setResult({ kind: "avatar", plan: out.plan });
         saveReel({ id, createdAt: Date.now(), kind: "avatar", title, plan: out.plan });
+        saveToServer("avatar", title, voiceLang, { plan: out.plan });
       } else {
         const out = await generateReel(input);
         setResult({ kind: "reel", plan: out.plan, voiceDataUrl: out.voiceDataUrl });
         saveReel({ id, createdAt: Date.now(), kind: "reel", title, plan: out.plan, voiceDataUrl: out.voiceDataUrl });
+        saveToServer("reel", title, voiceLang, { plan: out.plan, voiceDataUrl: out.voiceDataUrl });
       }
       setStatus("ready");
       setStep(3);

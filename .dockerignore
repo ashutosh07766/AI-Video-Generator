@@ -1,0 +1,8 @@
+node_modules
+.next
+.git
+.env*
+out
+*.log
+.DS_Store
+.context

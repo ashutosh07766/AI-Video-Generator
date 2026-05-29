@@ -1,0 +1,30 @@
+# Render.com blueprint for the ReelKaro render worker.
+# In Render: New → Blueprint → connect this repo. Then set the secret env
+# vars (marked sync:false) in the dashboard. Use the SAME values as Vercel,
+# with REDIS_URL = your Upstash rediss:// URL.
+services:
+  - type: worker
+    name: reelkaro-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile.worker
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: REDIS_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_PUBLIC_BASE_URL
+        sync: false
+      - key: S3_REGION
+        sync: false
+      - key: WORKER_CONCURRENCY
+        value: "2"
