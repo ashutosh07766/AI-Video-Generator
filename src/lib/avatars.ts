@@ -73,37 +73,117 @@ export type RawDialogue = {
   lines: { speaker: 0 | 1; text: string }[];
 };
 
+// Localized connective phrases for the no-key "director" engine. The user's
+// own offer/name/CTA (already in their language) are wrapped with these so
+// the scene feels like a real conversation, not echoed lines.
+type Phrases = {
+  hook: (name: string) => string; // excited opener
+  ask: string; // curious second speaker
+  react: string; // wow reaction
+  urge: string; // urgency
+  cta: string; // fallback CTA
+  intro: (name: string) => string; // presenter opener
+};
+
+const PHRASES: Record<LangCode, Phrases> = {
+  en: {
+    hook: (n) => `Big news from ${n || "our shop"}!`,
+    ask: "Oh really? Tell me more!",
+    react: "Wow, that's an amazing deal!",
+    urge: "Hurry — limited time only!",
+    cta: "Order now on WhatsApp",
+    intro: (n) => `Here's something special from ${n || "us"}…`,
+  },
+  hi: {
+    hook: (n) => `${n || "हमारी दुकान"} से बड़ी खबर!`,
+    ask: "अच्छा? ज़रा बताओ!",
+    react: "वाह! ये तो ज़बरदस्त ऑफ़र है!",
+    urge: "जल्दी करें, सीमित समय!",
+    cta: "अभी WhatsApp पर ऑर्डर करें",
+    intro: (n) => `${n || "हमारी ओर"} से कुछ खास आपके लिए…`,
+  },
+  ta: {
+    hook: (n) => `${n || "எங்கள் கடை"} இல் ஒரு பெரிய செய்தி!`,
+    ask: "அப்படியா? சொல்லுங்க!",
+    react: "வாவ்! அருமையான ஆஃபர்!",
+    urge: "சீக்கிரம், கொஞ்ச நேரம் மட்டுமே!",
+    cta: "இப்போதே WhatsApp இல் ஆர்டர் செய்யுங்கள்",
+    intro: (n) => `${n || "எங்களிடம்"} உங்களுக்காக சிறப்பு…`,
+  },
+  te: {
+    hook: (n) => `${n || "మా షాప్"} నుండి పెద్ద వార్త!`,
+    ask: "నిజమా? చెప్పండి!",
+    react: "వావ్! అదిరిపోయే ఆఫర్!",
+    urge: "త్వరగా, పరిమిత సమయం!",
+    cta: "ఇప్పుడే WhatsApp లో ఆర్డర్ చేయండి",
+    intro: (n) => `${n || "మా వద్ద"} మీ కోసం ప్రత్యేకం…`,
+  },
+  kn: {
+    hook: (n) => `${n || "ನಮ್ಮ ಅಂಗಡಿ"} ನಿಂದ ದೊಡ್ಡ ಸುದ್ದಿ!`,
+    ask: "ಹೌದಾ? ಹೇಳಿ!",
+    react: "ವಾವ್! ಅದ್ಭುತ ಆಫರ್!",
+    urge: "ಬೇಗ ಮಾಡಿ, ಸೀಮಿತ ಸಮಯ!",
+    cta: "ಈಗಲೇ WhatsApp ನಲ್ಲಿ ಆರ್ಡರ್ ಮಾಡಿ",
+    intro: (n) => `${n || "ನಮ್ಮಿಂದ"} ನಿಮಗಾಗಿ ವಿಶೇಷ…`,
+  },
+  mr: {
+    hook: (n) => `${n || "आमच्या दुकानातून"} मोठी बातमी!`,
+    ask: "खरंच? सांगा ना!",
+    react: "वाह! जबरदस्त ऑफर!",
+    urge: "लवकर करा, मर्यादित वेळ!",
+    cta: "आत्ताच WhatsApp वर ऑर्डर करा",
+    intro: (n) => `${n || "आमच्याकडून"} तुमच्यासाठी खास…`,
+  },
+  bn: {
+    hook: (n) => `${n || "আমাদের দোকান"} থেকে বড় খবর!`,
+    ask: "সত্যি? বলুন তো!",
+    react: "বাহ! দারুণ অফার!",
+    urge: "তাড়াতাড়ি করুন, সীমিত সময়!",
+    cta: "এখনই WhatsApp এ অর্ডার করুন",
+    intro: (n) => `${n || "আমাদের থেকে"} আপনার জন্য বিশেষ…`,
+  },
+};
+
 /**
- * Deterministic fallback so avatars work with no LLM key. Built ONLY from
- * the user's own words (business name → their message → CTA), in their
- * language — no invented English filler. For dialogue, the user's lines
- * alternate between the two speakers. (With an LLM key, generateDialogue
- * turns this into a natural conversation instead.)
+ * No-key "director" script engine — builds an engaging, persona-driven
+ * scene from the user's own offer, wrapped with localized hooks/reactions/
+ * urgency/CTA in their language. Free forever (no LLM). With an LLM key,
+ * generateDialogue produces an even more creative scene instead.
  */
 export function fallbackDialogue(input: AvatarInput): RawDialogue {
+  const p = PHRASES[input.lang] ?? PHRASES.en;
   const name = input.businessName.trim();
   const offer = input.offer.trim();
-  const cta = input.cta.trim();
+  const cta = input.cta.trim() || p.cta;
 
   const offerLines = offer
-    .split(/[.!?|\n]+/)
+    .split(/[.!?|।॥\n]+/) // incl. Devanagari/Indic danda
     .map((s) => s.trim())
     .filter(Boolean);
-
-  const content: string[] = [];
-  if (name) content.push(name);
-  content.push(...(offerLines.length ? offerLines : [offer || "Special offer!"]));
-  if (cta) content.push(cta);
-
-  const headline = (offerLines[0] || offer || name || "Special offer!").slice(0, 48);
+  const mainOffer = offerLines[0] || offer || "Special offer!";
+  const extra = offerLines[1];
+  const headline = mainOffer.slice(0, 48);
 
   if (input.format === "dialogue") {
-    return {
-      headline,
-      lines: content.map((text, i) => ({ speaker: (i % 2) as 0 | 1, text })),
-    };
+    // Two characters: curious ↔ revealer, with a real hook and reaction.
+    const lines: RawDialogue["lines"] = [
+      { speaker: 0, text: p.hook(name) },
+      { speaker: 1, text: p.ask },
+      { speaker: 0, text: mainOffer },
+    ];
+    if (extra) lines.push({ speaker: 1, text: extra });
+    lines.push({ speaker: 1, text: p.react });
+    lines.push({ speaker: 0, text: `${cta} — ${p.urge}` });
+    return { headline, lines };
   }
-  return { headline, lines: content.map((text) => ({ speaker: 0 as const, text })) };
+
+  // presenter / showcase = single speaker
+  const lines: RawDialogue["lines"] = [{ speaker: 0, text: p.intro(name) }];
+  for (const l of offerLines.length ? offerLines : [mainOffer]) {
+    lines.push({ speaker: 0, text: l });
+  }
+  lines.push({ speaker: 0, text: `${cta} — ${p.urge}` });
+  return { headline, lines };
 }
 
 /** Turn a raw dialogue into a timed, render-ready plan. */
