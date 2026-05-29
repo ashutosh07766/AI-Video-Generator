@@ -14,6 +14,9 @@ import {
   RefreshCw,
   Sparkles,
   X,
+  Plus,
+  Trash2,
+  Clapperboard,
 } from "lucide-react";
 import { Logo } from "@/components/Header";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -31,8 +34,14 @@ import {
   AvatarPlan,
   CHARACTERS,
   getCharacter,
+  fallbackDialogue,
 } from "@/lib/avatars";
-import { generateReel, generateAvatar } from "@/lib/pipeline/client";
+import {
+  generateReel,
+  generateAvatar,
+  generateAvatarScript,
+  AvatarScript,
+} from "@/lib/pipeline/client";
 import { fileToCompressedDataUrl } from "@/lib/image";
 import { cn } from "@/lib/cn";
 
@@ -117,6 +126,13 @@ function CreateFlow() {
   const [genStage, setGenStage] = useState(0);
   const [result, setResult] = useState<GenResult | null>(null);
 
+  // V2 editable script (avatar mode)
+  const [script, setScript] = useState<AvatarScript | null>(null);
+  const [scriptLoading, setScriptLoading] = useState(false);
+
+  const resultStep = mode === "avatar" ? 4 : 3;
+  const totalSteps = mode === "avatar" ? 4 : 3;
+
   // Default voiceover language follows the UI language until the user picks.
   useEffect(() => setVoiceLang(lang), [lang]);
 
@@ -146,7 +162,7 @@ function CreateFlow() {
       const id = `${Date.now()}`;
       const title = (offer.trim().split(/[.!?\n]/)[0] || businessName || "Reel").slice(0, 40);
       if (mode === "avatar") {
-        const out = await generateAvatar({ ...input, format, characters: [charA, charB] });
+        const out = await generateAvatar({ ...input, format, characters: [charA, charB] }, script ?? undefined);
         setResult({ kind: "avatar", plan: out.plan });
         saveReel({ id, createdAt: Date.now(), kind: "avatar", title, plan: out.plan });
         saveToServer("avatar", title, voiceLang, { plan: out.plan });
@@ -157,15 +173,49 @@ function CreateFlow() {
         saveToServer("reel", title, voiceLang, { plan: out.plan, voiceDataUrl: out.voiceDataUrl });
       }
       setStatus("ready");
-      setStep(3);
+      setStep(resultStep);
     } finally {
       clearInterval(ticker);
     }
   }
 
+  // Avatar flow: AI-generate the editable script, then move to the Script step.
+  async function handleGenerateScript() {
+    setScriptLoading(true);
+    try {
+      const avInput = { ...input, format, characters: [charA, charB] as [string, string] };
+      let s: AvatarScript;
+      try {
+        s = await generateAvatarScript(avInput);
+      } catch {
+        const raw = fallbackDialogue(avInput); // offline fallback
+        s = { headline: raw.headline, lines: raw.lines };
+      }
+      setScript(s);
+      setStep(3);
+    } finally {
+      setScriptLoading(false);
+    }
+  }
+
+  function updateLine(i: number, text: string) {
+    setScript((s) => (s ? { ...s, lines: s.lines.map((l, j) => (j === i ? { ...l, text } : l)) } : s));
+  }
+  function deleteLine(i: number) {
+    setScript((s) => (s ? { ...s, lines: s.lines.filter((_, j) => j !== i) } : s));
+  }
+  function addLine() {
+    setScript((s) => {
+      if (!s) return s;
+      const last = s.lines[s.lines.length - 1];
+      const speaker = format === "dialogue" ? (((last?.speaker ?? 1) ^ 1) as 0 | 1) : 0;
+      return { ...s, lines: [...s.lines, { speaker, text: "" }] };
+    });
+  }
+
   return (
     <main className="min-h-screen bg-base">
-      <TopBar step={step} />
+      <TopBar step={step} total={totalSteps} />
       <div className="container-px py-8">
         <AnimatePresence mode="wait">
           {step === 1 && (
@@ -302,15 +352,31 @@ function CreateFlow() {
               <FlowNav
                 onBack={() => setStep(1)}
                 backLabel={t("btn.back")}
-                onNext={handleGenerate}
-                nextLabel={t("btn.generate")}
-                nextDisabled={!canGenerate}
+                onNext={mode === "avatar" ? handleGenerateScript : handleGenerate}
+                nextLabel={mode === "avatar" ? t("btn.writeScript") : t("btn.generate")}
+                nextDisabled={!canGenerate || scriptLoading}
                 nextIcon={<Sparkles className="h-5 w-5" />}
               />
             </StepShell>
           )}
 
-          {step === 3 && result && (
+          {step === 3 && mode === "avatar" && (
+            <StepShell key="sc" title={t("create.script.title")} subtitle={t("create.script.subtitle")}>
+              <ScriptEditor
+                script={script}
+                loading={scriptLoading}
+                charIds={[charA, charB]}
+                onUpdate={updateLine}
+                onDelete={deleteLine}
+                onAdd={addLine}
+                onRegenerate={handleGenerateScript}
+                onMakeVideo={handleGenerate}
+                onBack={() => setStep(2)}
+              />
+            </StepShell>
+          )}
+
+          {step === resultStep && result && (
             <StepShell key="s3" title={t("create.s3.title")} subtitle={t("create.s3.subtitle")}>
               <ResultView
                 result={result}
@@ -351,14 +417,14 @@ function CreateFlow() {
   );
 }
 
-function TopBar({ step }: { step: number }) {
+function TopBar({ step, total }: { step: number; total: number }) {
   const { t } = useI18n();
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-base/80 backdrop-blur-lg">
       <div className="container-px flex h-16 items-center justify-between">
         <Logo />
         <span className="pill">
-          {t("create.step")} {step} {t("create.of")} 3
+          {t("create.step")} {step} {t("create.of")} {total}
         </span>
         <LanguageToggle compact />
       </div>
@@ -366,11 +432,96 @@ function TopBar({ step }: { step: number }) {
         <motion.div
           className="h-full bg-brand-500"
           initial={false}
-          animate={{ width: `${(step / 3) * 100}%` }}
+          animate={{ width: `${(step / total) * 100}%` }}
           transition={{ duration: 0.4 }}
         />
       </div>
     </header>
+  );
+}
+
+function ScriptEditor({
+  script,
+  loading,
+  charIds,
+  onUpdate,
+  onDelete,
+  onAdd,
+  onRegenerate,
+  onMakeVideo,
+  onBack,
+}: {
+  script: AvatarScript | null;
+  loading: boolean;
+  charIds: [string, string];
+  onUpdate: (i: number, text: string) => void;
+  onDelete: (i: number) => void;
+  onAdd: () => void;
+  onRegenerate: () => void;
+  onMakeVideo: () => void;
+  onBack: () => void;
+}) {
+  const { t } = useI18n();
+
+  if (loading || !script) {
+    return (
+      <div className="mx-auto flex max-w-md flex-col items-center py-16 text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-400" />
+        <p className="mt-4 text-white/70">{t("create.script.writing")}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-xl">
+      <div className="space-y-3">
+        {script.lines.map((l, i) => {
+          const ch = getCharacter(charIds[l.speaker]);
+          return (
+            <div key={i} className="glass flex items-start gap-3 p-3">
+              <div className="flex w-16 shrink-0 flex-col items-center">
+                <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-ink/90 to-surface2">
+                  <AvatarCharacter char={ch} speaking frame={0} size={42} />
+                </div>
+                <span className="mt-1 text-[11px] font-semibold text-white/60">{ch.name}</span>
+              </div>
+              <textarea
+                value={l.text}
+                onChange={(e) => onUpdate(i, e.target.value)}
+                rows={2}
+                className="ipt min-h-[52px] flex-1 resize-none !py-2 text-[15px]"
+              />
+              <button
+                onClick={() => onDelete(i)}
+                className="mt-2 text-white/35 hover:text-brand-400"
+                aria-label="delete line"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      <button
+        onClick={onAdd}
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 py-3 text-sm font-semibold text-white/60 hover:border-brand-400 hover:text-brand-400"
+      >
+        <Plus className="h-4 w-4" /> {t("script.add")}
+      </button>
+
+      <div className="mt-7 flex items-center gap-3">
+        <button onClick={onBack} className="btn-ghost">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <button onClick={onRegenerate} className="btn-ghost">
+          <RefreshCw className="h-4 w-4" /> {t("btn.regenScript")}
+        </button>
+        <button onClick={onMakeVideo} className="btn-primary flex-1">
+          <Clapperboard className="h-5 w-5" /> {t("btn.makeVideo")}
+        </button>
+      </div>
+    </div>
   );
 }
 

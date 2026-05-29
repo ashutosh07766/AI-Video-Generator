@@ -49,7 +49,31 @@ export async function generateReel(input: ReelInput): Promise<GenerateResult> {
 export type AvatarResult = { plan: AvatarPlan; source: string };
 
 /** V2: generate a talking-avatar reel (dialogue/presenter/showcase). */
-export async function generateAvatar(input: AvatarInput): Promise<AvatarResult> {
+export type DialogueLineInput = { speaker: 0 | 1; text: string };
+export type AvatarScript = { headline: string; lines: DialogueLineInput[] };
+
+/** Step 1 of avatar flow: AI-generate the editable script (no voiceover). */
+export async function generateAvatarScript(input: AvatarInput): Promise<AvatarScript> {
+  const res = await fetch("/api/avatar/script", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      format: input.format,
+      characters: input.characters,
+      businessName: input.businessName,
+      offer: input.offer,
+      cta: input.cta,
+      lang: input.lang,
+    }),
+  });
+  if (!res.ok) throw new Error(`avatar-script ${res.status}`);
+  return (await res.json()) as AvatarScript;
+}
+
+export async function generateAvatar(
+  input: AvatarInput,
+  script?: AvatarScript,
+): Promise<AvatarResult> {
   try {
     const res = await fetch("/api/avatar", {
       method: "POST",
@@ -63,6 +87,8 @@ export async function generateAvatar(input: AvatarInput): Promise<AvatarResult> 
         cta: input.cta,
         brandColor: input.brandColor,
         lang: input.lang,
+        // Use the edited script if the user reviewed one.
+        ...(script ? { lines: script.lines, headline: script.headline } : {}),
       }),
     });
     if (!res.ok) throw new Error(`avatar ${res.status}`);
