@@ -38,26 +38,26 @@ async function getBundle() {
   return serveUrl;
 }
 
-async function uploadR2(bytes, key) {
-  const account = process.env.R2_ACCOUNT_ID;
-  if (!account) return null;
+async function uploadVideo(bytes, key) {
+  const endpoint =
+    process.env.S3_ENDPOINT ||
+    (process.env.R2_ACCOUNT_ID
+      ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
+      : null);
+  const accessKeyId = process.env.S3_ACCESS_KEY_ID || process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY || process.env.R2_SECRET_ACCESS_KEY;
+  const bucket = process.env.S3_BUCKET || process.env.R2_BUCKET;
+  const base = (process.env.S3_PUBLIC_BASE_URL || process.env.R2_PUBLIC_BASE_URL)?.replace(/\/$/, "");
+  if (!endpoint || !accessKeyId || !secretAccessKey || !bucket) return null;
   const client = new S3Client({
-    region: "auto",
-    endpoint: `https://${account}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-    },
+    region: process.env.S3_REGION || "auto",
+    endpoint,
+    credentials: { accessKeyId, secretAccessKey },
+    forcePathStyle: true,
   });
   await client.send(
-    new PutObjectCommand({
-      Bucket: process.env.R2_BUCKET,
-      Key: key,
-      Body: bytes,
-      ContentType: "video/mp4",
-    }),
+    new PutObjectCommand({ Bucket: bucket, Key: key, Body: bytes, ContentType: "video/mp4" }),
   );
-  const base = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "");
   return base ? `${base}/${key}` : null;
 }
 
@@ -78,7 +78,7 @@ const worker = new Worker(
     });
     const bytes = new Uint8Array(await fs.readFile(out));
     fs.unlink(out).catch(() => {});
-    const url = await uploadR2(bytes, `reels/${job.id}.mp4`);
+    const url = await uploadVideo(bytes, `reels/${job.id}.mp4`);
     if (sql && videoId) {
       await sql`update videos set status = 'ready', media_url = ${url} where id = ${videoId}`;
     }

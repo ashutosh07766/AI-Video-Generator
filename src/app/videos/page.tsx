@@ -9,19 +9,53 @@ import { ReelPlayer } from "@/components/ReelPlayer";
 import { AvatarPlayer } from "@/components/AvatarPlayer";
 import { useI18n } from "@/lib/i18n/provider";
 import { listReels, deleteReel, SavedReel } from "@/lib/store";
+import { fetchMe } from "@/lib/auth";
 import { ReelPlan } from "@/lib/templates";
 import { AvatarPlan } from "@/lib/avatars";
+
+type ServerVideo = {
+  id: string;
+  kind: "reel" | "avatar";
+  title: string;
+  createdAt: string;
+  meta?: { plan?: ReelPlan | AvatarPlan; voiceDataUrl?: string };
+};
 
 export default function VideosPage() {
   const { t } = useI18n();
   const [reels, setReels] = useState<SavedReel[]>([]);
   const [open, setOpen] = useState<SavedReel | null>(null);
+  const [serverMode, setServerMode] = useState(false);
 
-  useEffect(() => setReels(listReels()), []);
+  useEffect(() => {
+    (async () => {
+      const me = await fetchMe();
+      if (me) {
+        setServerMode(true);
+        const data = await fetch("/api/videos")
+          .then((r) => r.json())
+          .catch(() => ({ videos: [] }));
+        const mapped: SavedReel[] = (data.videos as ServerVideo[])
+          .filter((v) => v.meta?.plan)
+          .map((v) => ({
+            id: v.id,
+            createdAt: new Date(v.createdAt).getTime(),
+            kind: v.kind,
+            title: v.title,
+            plan: v.meta!.plan!,
+            voiceDataUrl: v.meta?.voiceDataUrl,
+          }));
+        setReels(mapped);
+      } else {
+        setReels(listReels());
+      }
+    })();
+  }, []);
 
-  function remove(id: string) {
-    deleteReel(id);
-    setReels(listReels());
+  async function remove(id: string) {
+    if (serverMode) await fetch(`/api/videos?id=${id}`, { method: "DELETE" });
+    else deleteReel(id);
+    setReels((prev) => prev.filter((r) => r.id !== id));
   }
 
   return (
