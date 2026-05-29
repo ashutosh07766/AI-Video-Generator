@@ -1,0 +1,18 @@
+{
+  "name": "ReelKaro — AI marketing reels",
+  "short_name": "ReelKaro",
+  "description": "Make professional marketing reels for your business in your language, in under 2 minutes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fffaf5",
+  "theme_color": "#f4452a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
