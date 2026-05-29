@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-cream text-ink antialiased;
+  background-image: var(--tw-gradient-to);
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer components {
+  .container-px {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3
+      text-base font-semibold transition-all duration-200 active:scale-[0.97]
+      disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-brand-500 text-white shadow-soft hover:bg-brand-600 hover:shadow-glow;
+  }
+  .btn-ghost {
+    @apply btn bg-white/70 text-ink ring-1 ring-black/5 hover:bg-white;
+  }
+  .btn-dark {
+    @apply btn bg-ink text-cream hover:bg-ink-soft;
+  }
+
+  .card {
+    @apply rounded-3xl bg-white shadow-card ring-1 ring-black/[0.04];
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1
+      text-sm font-medium text-ink-soft ring-1 ring-black/5;
+  }
+
+  /* Phone frame used to showcase vertical reels (9:16). */
+  .phone {
+    @apply relative overflow-hidden rounded-[2.2rem] bg-black shadow-2xl ring-[6px] ring-ink/90;
+    aspect-ratio: 9 / 16;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-br from-brand-500 via-brand-600 to-gold-500 bg-clip-text text-transparent;
+  }
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.45),
+      transparent
+    );
+    animation: shimmer 1.6s infinite;
+  }
+}
