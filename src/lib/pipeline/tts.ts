@@ -1,4 +1,5 @@
 import "server-only";
+import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
 import { LangCode } from "../i18n/messages";
 
 export type VoiceGender = "female" | "male";
@@ -16,8 +17,38 @@ const DEFAULT_SARVAM = { female: "anushka", male: "abhilash" } as const;
 export type TtsResult = {
   audioBase64: string;
   mime: string;
-  source: "sarvam" | "google" | "googletranslate";
+  source: "edge" | "sarvam" | "google" | "googletranslate";
 } | null;
+
+// ── Microsoft Edge neural TTS (FREE, no key, no card) ────────────────
+// High-quality neural voices incl. Indian languages (1 female + 1 male
+// each). This is the primary free provider — distinct voices by gender.
+const EDGE_VOICES: Record<LangCode, { female: string; male: string }> = {
+  en: { female: "en-IN-NeerjaNeural", male: "en-IN-PrabhatNeural" },
+  hi: { female: "hi-IN-SwaraNeural", male: "hi-IN-MadhurNeural" },
+  ta: { female: "ta-IN-PallaviNeural", male: "ta-IN-ValluvarNeural" },
+  te: { female: "te-IN-ShrutiNeural", male: "te-IN-MohanNeural" },
+  kn: { female: "kn-IN-SapnaNeural", male: "kn-IN-GaganNeural" },
+  mr: { female: "mr-IN-AarohiNeural", male: "mr-IN-ManoharNeural" },
+  bn: { female: "bn-IN-TanishaaNeural", male: "bn-IN-BashkarNeural" },
+};
+
+async function viaEdge(text: string, lang: LangCode, opts: VoiceOpts): Promise<TtsResult> {
+  const set = EDGE_VOICES[lang] ?? EDGE_VOICES.hi;
+  const voice = opts.gender === "male" ? set.male : set.female;
+  const tts = new MsEdgeTTS();
+  await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+  const { audioStream } = tts.toStream(text.slice(0, 1500));
+  const chunks: Buffer[] = [];
+  await new Promise<void>((resolve, reject) => {
+    audioStream.on("data", (c: Buffer) => chunks.push(c));
+    audioStream.on("end", () => resolve());
+    audioStream.on("error", reject);
+  });
+  const buf = Buffer.concat(chunks);
+  if (!buf.length) return null;
+  return { audioBase64: buf.toString("base64"), mime: "audio/mpeg", source: "edge" };
+}
 
 // Sarvam expects BCP-47-ish codes like "hi-IN", "ta-IN".
 const SARVAM_LOCALE: Record<LangCode, string> = {
@@ -153,7 +184,9 @@ export async function synthesizeVoice(
   lang: LangCode,
   opts: VoiceOpts = {},
 ): Promise<TtsResult> {
-  for (const fn of [viaSarvam, viaGoogle, viaGoogleTranslate]) {
+  // Edge first = free neural voices (no key, no credit burn). Sarvam/Google
+  // used only if their keys are set and Edge fails. Google Translate = last resort.
+  for (const fn of [viaEdge, viaSarvam, viaGoogle, viaGoogleTranslate]) {
     try {
       const out = await fn(text, lang, opts);
       if (out) return out;
